@@ -1,21 +1,51 @@
 require('dotenv').config()
 const  http=require ("http")
 const url=require ("url")
-const qs = require("querystring");
-let responder=(res,param)=>{
-        res.writeHead(200,{"Content-Type":"text/html"})
-        res.end(param)
+const qs = require("querystring")
+const fs=require ("fs")
+const path=require ("path")
+
+const ext_types={
+    ".html":"text/html",
+    ".css":"text/css",
+    ".js":"text/javascript",
+    ".png":"image/png",
+    ".jpg":"image/jepg",
+    ".gif":"image/gif",
+}
+
+let file_handler=(file_path,res)=>{
+    fs.access(file_path,fs.F_OK,(err)=>{
+        let path_type=path.extname(file_path)
+        if(err)throw err
+        fs.readFile(file_path,(err,data)=>{
+            if(err){
+                res.writeHead(404,{"Content-type":"text/html"})
+                res.end(err)
+            }else{
+                console.log(ext_types[path_type])
+                res.writeHead(200,{"Content-type":ext_types[path_type]})
+                res.end(data)
+            }
+            
+        })
+    })
+   
+    console.log(file_path)
 }
 let method={
     "GET":{
         "/":(req,res)=>{
-            responder(res,__dirname+"\\index.html")
+            let file_path=__dirname+"\\index.html"
+            file_handler(file_path,res)
         },
         "/home":(req,res)=>{
-            responder(res,__dirname+"\\index.html")
+            let file_path=__dirname+"\\index.html"
+            file_handler(file_path,res)
         },
         "/about":(req,res)=>{
-            responder(res,__dirname+"\\about.html")
+            let file_path=__dirname+"\\about.html"
+            file_handler(file_path,res)
         },
     },
     "POST":{
@@ -45,9 +75,10 @@ let method={
 let server=http.createServer((req,res)=>{
     let url_parsing=url.parse(req.url,true)
     let fun= method[req.method][url_parsing.pathname]
+    
     if(fun!=undefined){
         fun(req,res)
-        console.log(url_parsing)
+        
     }else{
         method["Na"](res)
         
